@@ -1,7 +1,8 @@
 vers 0.0.1
 
 # homebridge-http-jeedom
-Supports Jeedom through https API calls
+Supports Jeedom through https API calls.
+
 Based on https://github.com/rudders/homebridge-http
 
 # Installation
