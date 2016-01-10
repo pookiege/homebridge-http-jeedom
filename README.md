@@ -1,6 +1,6 @@
 vers 0.0.1
 
-# homebridge-jeedom
+# homebridge-http-jeedom
 Supports Jeedom through https API calls
 Based on https://github.com/rudders/homebridge-http
 
