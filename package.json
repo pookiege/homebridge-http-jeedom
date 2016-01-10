@@ -1,6 +1,6 @@
 {
   "name": "homebridge-http-jeedom",
-  "version": "0.0.1",
+  "version": "0.0.3",
   "description": "A Jeedom http(s) plugin for Homebridge: https://github.com/nfarina/homebridge",
   "license": "ISC",
   "keywords": [
@@ -14,7 +14,7 @@
     "name": "Adrian Rudman"
   },
   "contributors":[
-    { "name" : "jude16"},
+    { "name" : "jude16"}
   ],
   "repository": {
     "type": "git",
