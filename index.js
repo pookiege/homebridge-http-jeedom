@@ -4,203 +4,203 @@ var request = require("request");
 module.exports = function(homebridge){
   Service = homebridge.hap.Service;
   Characteristic = homebridge.hap.Characteristic;
-  homebridge.registerAccessory("homebridge-httpstatus", "Http", HttpStatusAccessory);
+  homebridge.registerAccessory("homebridge-http-jeedom", "HttpJeedom", HttpJeedomAccessory);
 }
 
-
-function HttpStatusAccessory(log, config) {
+function HttpJeedomAccessory(log, config) {
   this.log = log;
 
-  // url info
-  this.on_url                 = config["on_url"];
-  this.on_body                = config["on_body"];
-  this.off_url                = config["off_url"];
-  this.off_body               = config["off_body"];
-  this.status_url             = config["status_url"];
-  this.brightness_url         = config["brightness_url"];
-  this.brightnesslvl_url      = config["brightnesslvl_url"];
-  this.http_method            = config["http_method"] 	  	 || "GET";;
-  this.http_brightness_method = config["http_brightness_method"] || this.http_method;
-  this.username               = config["username"] 	  	 || "";
-  this.password               = config["password"] 	  	 || "";
-  this.sendimmediately        = config["sendimmediately"] 	 || "";
-  this.service                = config["service"] 	  	 || "Switch";
-  this.name                   = config["name"];
-  this.brightnessHandling     = config["brightnessHandling"] 	 || "no";
-  this.switchHandling = config["switchHandling"] 		 || "no";
+  this.jeedom_url           = config["jeedom_url"];
+  this.jeedom_api           = config["jeedom_api"];
+  this.service              = config["service"];
+
+  this.name                 = config["name"];
+
+
+  //SwitchService
+  this.onCommandID          = config["onCommandID"];
+  this.offCommandID         = config["offCommandID"];
+  this.stateCommandID       = config["stateCommandID"];
+
+  //TemperatureService
+  this.temperatureCommandID = config["temperatureCommandID"];
+
+  //HumidityService
+  this.humidtyCommandID     = config["humidityCommandID"];
+
 }
 
-HttpStatusAccessory.prototype = {
+HttpJeedomAccessory.prototype = {
 
-  httpRequest: function(url, body, method, username, password, sendimmediately, callback) {
+  httpRequest: function(url, callback) {
     request({
       url: url,
-      body: body,
-      method: method,
-      rejectUnauthorized: false,
-      auth: {
-        user: username,
-        pass: password,
-        sendImmediately: sendimmediately
-      }
+      method: "GET",
+      rejectUnauthorized: false
     },
-    function(error, response, body) {
-      callback(error, response, body)
-    })
-  },
+  function(error,response, body) {
+    callback(error, response, body)
+  })
+},
 
-  setPowerState: function(powerOn, callback) {
-    var url;
-    var body;
+//This function builds the URL.
+setUrl: function(cmdID) {
+  var url;
 
-    if (!this.on_url || !this.off_url) {
-    	    this.log.warn("Ignoring request; No power url defined.");
-	    callback(new Error("No power url defined."));
-	    return;
-    }
+  url = this.jeedom_url + "/core/api/jeeApi.php?apikey=" + this.jeedom_api + "&type=cmd&id=" + cmdID;
 
-    if (powerOn) {
-      url = this.on_url;
-      body = this.on_body;
-      this.log("Setting power state to on");
-    } else {
-      url = this.off_url;
-      body = this.off_body;
-      this.log("Setting power state to off");
-    }
+  return url;
+},
 
-    this.httpRequest(url, body, this.http_method, this.username, this.password, this.sendimmediately, function(error, response, responseBody) {
-      if (error) {
-        this.log('HTTP set power function failed: %s', error.message);
-        callback(error);
-      } else {
-        this.log('HTTP set power function succeeded!');
-        callback();
-      }
-    }.bind(this));
-  },
-  
-  getPowerState: function(callback) {
-    if (!this.status_url) {
-    	    this.log.warn("Ignoring request; No status url defined.");
-	    callback(new Error("No status url defined."));
-	    return;
-    }
-    
-    var url = this.status_url;
-    this.log("Getting power state");
+//This function turns On or Off a switch device
+setPowerState: function(powerOn, callback) {
+  var url;
 
-    this.httpRequest(url, "", "GET", this.username, this.password, this.sendimmediately, function(error, response, responseBody) {
-      if (error) {
-        this.log('HTTP get power function failed: %s', error.message);
-        callback(error);
-      } else {
-        var binaryState = parseInt(responseBody);
-        var powerOn = binaryState > 0;
-        this.log("Power state is currently %s", binaryState);
-        callback(null, powerOn);
-      }
-    }.bind(this));
-  },
-
-getBrightness: function(callback) {
-	if (!this.brightnesslvl_url) {
-    	    this.log.warn("Ignoring request; No brightness level url defined.");
-	    callback(new Error("No brightness level url defined."));
-	    return;
-	 }		
-		var url = this.brightnesslvl_url;
-		this.log("Getting Brightness level");
-
-		this.httpRequest(url, "", "GET", this.username, this.password, this.sendimmediately, function(error, response, responseBody) {
-		  if (error) {
-			this.log('HTTP get brightness function failed: %s', error.message);
-			callback(error);
-		  } else {			
-		    var binaryState = parseInt(responseBody);
-			var level = binaryState;
-			this.log("brightness state is currently %s", binaryState);
-			callback(null, level);
-		  }
-		}.bind(this));
-	  },
-
-  setBrightness: function(level, callback) {
-	
-	if (!this.brightness_url) {
-    	    this.log.warn("Ignoring request; No brightness url defined.");
-	    callback(new Error("No brightness url defined."));
-	    return;
-	 }    
-
-    var url = this.brightness_url.replace("%b", level)
-
-    this.log("Setting brightness to %s", level);
-
-    this.httpRequest(url, "", this.http_brightness_method, this.username, this.password, this.sendimmediately, function(error, response, body) {
-      if (error) {
-        this.log('HTTP brightness function failed: %s', error);
-        callback(error);
-      } else {
-        this.log('HTTP brightness function succeeded!');
-        callback();
-      }
-    }.bind(this));
-  },
-
-  identify: function(callback) {
-    this.log("Identify requested!");
-    callback(); // success
-  },
-
-  getServices: function() {
-
-    // you can OPTIONALLY create an information service if you wish to override
-    // the default values for things like serial number, model, etc.
-    var informationService = new Service.AccessoryInformation();
-
-    informationService
-    .setCharacteristic(Characteristic.Manufacturer, "HTTP Manufacturer")
-    .setCharacteristic(Characteristic.Model, "HTTP Model")
-    .setCharacteristic(Characteristic.SerialNumber, "HTTP Serial Number");
-
-    if (this.service == "Switch") {
-      var switchService = new Service.Switch(this.name);
-
-      if (this.switchHandling == "yes") {
-			switchService
-			.getCharacteristic(Characteristic.On)
-			.on('get', this.getPowerState.bind(this))
-			.on('set', this.setPowerState.bind(this));
-		  } else {
-			switchService
-			.getCharacteristic(Characteristic.On)	
-			.on('set', this.setPowerState.bind(this));
-		  }
-      return [switchService];
-    } else if (this.service == "Light") {
-      var lightbulbService = new Service.Lightbulb(this.name);
-
-	if (this.switchHandling == "yes") {
-			lightbulbService
-			.getCharacteristic(Characteristic.On)
-			.on('get', this.getPowerState.bind(this))
-			.on('set', this.setPowerState.bind(this));
-		  } else {
-			lightbulbService
-			.getCharacteristic(Characteristic.On)	
-			.on('set', this.setPowerState.bind(this));
-		  }
-
-      if (this.brightnessHandling == "yes") {
-
-        lightbulbService
-        .addCharacteristic(new Characteristic.Brightness())
-        .on('get', this.getBrightness.bind(this))
-        .on('set', this.setBrightness.bind(this));
-      }
-
-      return [informationService, lightbulbService];
-    }
+  if (!this.onCommandID || !this.offCommandID) {
+    this.log.warn("No command ID defined, please check config.json file");
+    callback(new Error("No command ID defined"));
+    return;
   }
-};
+
+  if (powerOn) {
+    url = this.setUrl(this.onCommandID);
+  } else {
+    url = this.setUrl(this.offCommandID);
+  }
+
+  this.httpRequest(url, function(error, response, responseBody) {
+    if (error) {
+      this.log("HTTP set power failed with error: %s", error.message);
+      callback(error);
+    } else {
+      this.log("HTTP set power succeeded");
+      callback();
+    }
+  }.bind(this));
+},
+
+//This function get a switch state
+getPowerState: function(callback) {
+  var url;
+
+  if (!this.stateCommandID) {
+    this.log.warn("No state command ID defined");
+    callback(new Error("No status command ID defined"));
+    return;
+  }
+
+  url = this.setUrl(this.stateCommandID);
+
+  this.httpRequest(url, function(error, response, responseBody) {
+    if (error) {
+      this.log("HTTP get power function failed: %s", error.message);
+      callback(error);
+    } else {
+      var binaryState = parseInt(responseBody);
+      var powerOn = binaryState > 0;
+      this.log("Power state is currently %s", binaryState);
+      callback(null, powerOn);
+    }
+  }.bind(this));
+},
+
+getTemperature: function(callback) {
+  var url;
+
+  if (!this.temperatureCommandID) {
+    this.log.warn("No temperature command ID defined");
+    callback(new Error("No temperature command ID defined"));
+    return;
+  }
+
+  url = this.setUrl(this.temperatureCommandID);
+
+  this.log("Getting current temperature for sensor " + this.name );
+
+  this.httpRequest(url, function(error, response, responseBody) {
+    if (error) {
+      this.log("HTTP get temperature function failed: %s", error.message);
+      callback(error);
+    } else {
+      var floatState = parseFloat(responseBody);
+      this.log("Temperature for sensor " + this.name + " is currently %s", floatState);
+      callback(null, floatState);
+    }
+  }.bind(this));
+
+},
+
+getHumidity: function(callback) {
+  var url;
+
+  if (!this.humidityCommandID) {
+    this.log.warn("No humidity command ID defined");
+    callback(new Error("No humidity command ID defined"));
+    return;
+  }
+
+  url = this.setUrl(this.humidityCommandID);
+
+  this.log("Getting current humidity for sensor " + this.name );
+
+  this.httpRequest(url, function(error, response, responseBody) {
+    if (error) {
+      this.log("HTTP get humidity function failed: %s", error.message);
+      callback(error);
+    } else {
+      var floatState = parseFloat(responseBody);
+      this.log("Humidity for sensor " + this.name + " is currently %s", floatState);
+      callback(null, floatState);
+    }
+  }.bind(this));
+
+},
+
+identify: function(callback) {
+  this.log("Identify requested");
+  callback();
+},
+
+getServices: function() {
+  // you can OPTIONALLY create an information service if you wish to override
+  // the default values for things like serial number, model, etc.
+  var informationService = new Service.AccessoryInformation();
+
+  informationService
+  .setCharacteristic(Characteristic.Manufacturer, "HTTP Manufacturer")
+  .setCharacteristic(Characteristic.Model, "HTTP Model")
+  .setCharacteristic(Characteristic.SerialNumber, "HTTP Serial Number");
+
+  if (this.service == "SwitchService") {
+    this.log("Defining a switch module");
+
+    var switchService = new Service.Switch(this.name);
+
+    switchService
+    .getCharacteristic(Characteristic.On)
+    .on('get', this.getPowerState.bind(this))
+    .on('set', this.setPowerState.bind(this));
+
+    return [switchService];
+
+  } else if (this.service == "TemperatureService"){
+    var temperatureService = new Service.TemperatureSensor(this.name);
+
+    temperatureService
+    .getCharacteristic(Characteristic.CurrentTemperature)
+    .on('get', this.getTemperature.bind(this));
+
+    return [informationService, temperatureService];
+
+  } else if (this.service == "HumidityService") {
+    var humidityService = new Service.HumiditySensor(this.name);
+
+    humidityService
+    .getCharacteristic(Characteristic.CurrentRelativeHumidity)
+    .on('get', this.getHumidity.bind(this));
+
+    return [informationService, humidityService];
+  }
+
+}
+}

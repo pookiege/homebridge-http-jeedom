@@ -1,29 +1,23 @@
 {
-     "bridge": {
-        "name": "HomeBridge",
-        "username": "CC:22:3D:E3:CE:30",
+    "bridge": {
+        "name": "Jeedom Bridge",
+        "username": "31:AA:CF:B6:16:42",
         "port": 51826,
-        "pin": "031-45-154"
+        "pin": "031-45-156"
     },
-    
-    "description": "HomeBridge HTTP Status Control",
 
-    "accessories": [ {
-		"accessory": "Http",
-		"name": "Alfresco Lamp",
-		"switchHandling": "yes",
-		"http_method": "GET",
-		"on_url":      "http://localhost/controller/1700/ON",
-		"off_url":     "http://localhost/controller/1700/OFF",
-		"status_url":  "http://localhost/status/100059",
-		"service": "Light",
-		"brightnessHandling": "yes",
-		"brightness_url":     "http://localhost/controller/1707/%b",
-		"brightnesslvl_url":  "http://localhost/status/100054",
-		"username" : "",
-		"password" : "",
-		"sendimmediately": "","
-									    
-       } 
+    "description": "Homebridge platform",
+
+    "platforms": [],
+
+    "accessories": [
+      {
+        "accessory": "HttpJeedom",
+        "jeedom_url": "https://jeedom.domain.com/jeedom",
+        "jeedom_api": "x8r0pcqgjfghrthtx158",
+        "service": "TemperatureService",
+        "name": "Living Room Temperature",
+        "temperatureCommandID": "185"
+      }
     ]
 }

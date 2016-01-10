@@ -1,42 +1,45 @@
-# homebridge-http
+vers 0.0.1
 
-Supports https devices on the HomeBridge Platform and provides a readable callback for getting the "On" and brightness level characteristics to Homekit.
+# homebridge-jeedom
+Supports Jeedom through https API calls
+Based on https://github.com/rudders/homebridge-http
 
 # Installation
 
 1. Install homebridge using: npm install -g homebridge
-2. Install homebridge-http using: npm install -g homebridge-http
-3. Update your configuration file. See sample-config.json in this repository for a sample. 
+2. Install this plugin using: npm install -g homebridge-http-jeedom
+3. Update your configuration file. See sample-config.json in this repository for a sample.
 
 # Configuration
 
-This module has recently been updated to support an additional method to read the power state of the device and the brightness level. Specify the `status_url` in your config.json that returns the status of the device as an integer (0 = off, 1 = on). 
+List of available services (and configuration var):
+SwitchService
+        -onCommandID
+        -offCommandID
+        -stateCommandID
+TemperatureService
+        -temperatureCommandID
+HumidityService
+        -humidityCommandID
 
-Specify the `brightnesslvl_url` to return the current brightness level as an integer.
+* 'jeedom_url' ==> URL address of your Jeedom server
+* 'jeedom_api' ==> Get your Jeedom API in "Configuration" in Jeedom
+* 'xxxCommandID' ==> Unique ID of the command, available in the detail view of the command in Jeedom.
 
 Configuration sample:
 
+
  ```
-"accessories": [ 
-	{
-		"accessory": "Http",
-		"name": "Alfresco Lamp",
-		"switchHandling": "yes",
-		"http_method": "GET",
-		"on_url":      "http://localhost/controller/1700/ON",
-		"off_url":     "http://localhost/controller/1700/OFF",
-		"status_url":  "http://localhost/status/100059",
-		"service": "Light",
-		"brightnessHandling": "yes",
-		"brightness_url":     "http://localhost/controller/1707/%b",
-		"brightnesslvl_url":  "http://localhost/status/100054",
-		"sendimmediately": "",
-		"username" : "",
-		"password" : ""					    
-       } 
+"accessories": [
+        "accessories": [
+        {
+            "accessory": "Httpjeedom",
+            "jeedom_url": "https://jeedom.domain.com/jeedom",
+            "jeedom_api": "x8r0pcqgjfghrthtx158",
+            "service": "TemperatureService",
+            "name": "Living Room Temperature",
+            "temperatureCommandID": "185"
+        }
     ]
+
 ```
-
-#ToDo
-
-Complete documentation and review a number of  forks
