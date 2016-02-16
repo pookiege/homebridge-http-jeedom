@@ -1,6 +1,6 @@
 {
   "name": "homebridge-http-jeedom",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "description": "A Jeedom http(s) plugin for Homebridge: https://github.com/nfarina/homebridge",
   "license": "ISC",
   "keywords": [
