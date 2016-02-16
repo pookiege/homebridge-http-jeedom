@@ -26,7 +26,7 @@ function HttpJeedomAccessory(log, config) {
   this.temperatureCommandID = config["temperatureCommandID"];
 
   //HumidityService
-  this.humidtyCommandID     = config["humidityCommandID"];
+  this.humidityCommandID     = config["humidityCommandID"];
 
 }
 
