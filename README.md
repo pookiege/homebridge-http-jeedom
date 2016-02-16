@@ -32,7 +32,7 @@ Configuration sample:
 "accessories": [
         "accessories": [
         {
-            "accessory": "Httpjeedom",
+            "accessory": "HttpJeedom",
             "jeedom_url": "https://jeedom.domain.com/jeedom",
             "jeedom_api": "x8r0pcqgjfghrthtx158",
             "service": "TemperatureService",
