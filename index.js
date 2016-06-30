@@ -25,6 +25,8 @@ function HttpJeedomAccessory(log, config) {
     this.upCommandID = config["upCommandID"];
     this.downCommandID = config["downCommandID"];
     this.stateCommandID = config["stateCommandID"];
+    // AmbientLightService
+    this.ambientLightCommandID     = config["ambientLightCommandID"];
 }
 
 HttpJeedomAccessory.prototype = {
@@ -42,19 +44,17 @@ HttpJeedomAccessory.prototype = {
 
     //This function builds the URL.
     setUrl: function (cmdID) {
-        var url;
-        url = this.jeedom_url + "/core/api/jeeApi.php?apikey=" + this.jeedom_api + "&type=cmd&id=" + cmdID;
-        return url;
+        return this.jeedom_url + "/core/api/jeeApi.php?apikey=" + this.jeedom_api + "&type=cmd&id=" + cmdID;
     },
 
     //This function turns On or Off a switch device
     setPowerState: function (powerOn, callback) {
-        var url;
         if (!this.onCommandID || !this.offCommandID) {
             this.log.warn("No command ID defined, please check config.json file");
             callback(new Error("No command ID defined"));
             return;
         }
+        var url;
         if (powerOn) {
             url = this.setUrl(this.onCommandID);
         } else {
@@ -73,13 +73,12 @@ HttpJeedomAccessory.prototype = {
 
     //This function get a switch state
     getPowerState: function (callback) {
-        var url;
         if (!this.stateCommandID) {
             this.log.warn("No state command ID defined");
             callback(new Error("No status command ID defined"));
             return;
         }
-        url = this.setUrl(this.stateCommandID);
+        var url = this.setUrl(this.stateCommandID);
         this.httpRequest(url, function (error, response, responseBody) {
             if (error) {
                 this.log("HTTP get power function failed: %s", error.message);
@@ -95,13 +94,12 @@ HttpJeedomAccessory.prototype = {
 
     //This function get a temperature measurement
     getTemperature: function (callback) {
-        var url;
         if (!this.temperatureCommandID) {
             this.log.warn("No temperature command ID defined");
             callback(new Error("No temperature command ID defined"));
             return;
         }
-        url = this.setUrl(this.temperatureCommandID);
+        var url = this.setUrl(this.temperatureCommandID);
         this.log("Getting current temperature for sensor " + this.name);
         this.httpRequest(url, function (error, response, responseBody) {
             if (error) {
@@ -117,13 +115,12 @@ HttpJeedomAccessory.prototype = {
 
     //This function get a humidity measurement
     getHumidity: function (callback) {
-        var url;
         if (!this.humidityCommandID) {
             this.log.warn("No humidity command ID defined");
             callback(new Error("No humidity command ID defined"));
             return;
         }
-        url = this.setUrl(this.humidityCommandID);
+        var url = this.setUrl(this.humidityCommandID);
         this.log("Getting current humidity for sensor " + this.name);
         this.httpRequest(url, function (error, response, responseBody) {
             if (error) {
@@ -139,12 +136,12 @@ HttpJeedomAccessory.prototype = {
 
     //This function moves Up or Down a shutter device
     setShutterState: function (shutterUp, callback) {
-        var url;
         if (!this.upCommandID || !this.downCommandID) {
             this.log.warn("No command ID defined, please check config.json file");
             callback(new Error("No command ID defined"));
             return;
         }
+        var url;
         if (shutterUp) {
             url = this.setUrl(this.upCommandID);
         } else {
@@ -163,13 +160,12 @@ HttpJeedomAccessory.prototype = {
 
     //This function get a shutter state
     getShutterState: function (callback) {
-        var url;
         if (!this.stateCommandID) {
             this.log.warn("No state command ID defined");
             callback(new Error("No status command ID defined"));
             return;
         }
-        url = this.setUrl(this.stateCommandID);
+        var url = this.setUrl(this.stateCommandID);
         this.httpRequest(url, function (error, response, responseBody) {
             if (error) {
                 this.log("HTTP get shutter state function failed: %s", error.message);
@@ -179,6 +175,26 @@ HttpJeedomAccessory.prototype = {
                 var shutterUp = binaryState > 0;
                 this.log("Shutter state is currently %s", binaryState);
                 callback(null, shutterUp);
+            }
+        }.bind(this));
+    },
+
+    getAmbientLight: function(callback) {
+        if (!this.ambientLightCommandID) {
+            this.log.warn("No ambient light command ID defined");
+            callback(new Error("No ambient light command ID defined"));
+            return;
+        }
+        var url = this.setUrl(this.ambientLightCommandID);
+        this.log("Getting current humidity for sensor " + this.name );
+        this.httpRequest(url, function(error, response, responseBody) {
+            if (error) {
+                this.log("HTTP get ambient light function failed: %s", error.message);
+                callback(error);
+            } else {
+                var floatState = parseFloat(responseBody);
+                this.log("Ambient light for sensor " + this.name + " is currently %s", floatState);
+                callback(null, floatState);
             }
         }.bind(this));
     },
@@ -218,12 +234,18 @@ HttpJeedomAccessory.prototype = {
                 .on('get', this.getHumidity.bind(this));
             return [informationService, humidityService];
         } else if (this.service == "ShutterService") {
-            var WindowCoveringService = new Service.WindowCovering(this.name);
-            WindowCoveringService
+            var windowCoveringService = new Service.WindowCovering(this.name);
+            windowCoveringService
                 .getCharacteristic(Characteristic.TargetPosition)
                 .on('get', this.getShutterState.bind(this))
                 .on('set', this.setShutterState.bind(this));
-            return [WindowCoveringService];
+            return [windowCoveringService];
+        } else if (this.service == "AmbientLightService") {
+            var ambientLightService = new Service.LightSensor(this.name);
+            ambientLightService
+                .getCharacteristic(Characteristic.CurrentAmbientLightLevel)
+                .on('get', this.getAmbientLight.bind(this));
+            return [informationService, ambientLightService];
         }
     }
 }

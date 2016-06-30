@@ -7,3 +7,7 @@
 .npmignore
 .jshintrc
 
+
+.idea/*
+
+homebridge-http-jeedom.iml
