@@ -13,10 +13,12 @@ function HttpJeedomAccessory(log, config) {
     this.jeedom_api = config["jeedom_api"];
     this.service = config["service"];
     this.name = config["name"];
-    // SwitchService
+    // SwitchService, OutletService, FanService
     this.onCommandID = config["onCommandID"];
     this.offCommandID = config["offCommandID"];
     this.stateCommandID = config["stateCommandID"];
+    // LightbulbService
+    this.levelCommandID = config["levelCommandID"];
     // TemperatureService
     this.temperatureCommandID = config["temperatureCommandID"];
     // HumidityService
@@ -31,10 +33,11 @@ function HttpJeedomAccessory(log, config) {
     this.openGarageDoorCommandID = config["openGarageDoorCommandID"];
     this.closeGarageDoorCommandID = config["closeGarageDoorCommandID"];
     this.stateGarageDoorCommandID = config["stateGarageDoorCommandID"];
+    // CarbonMonoxideSensorService, CarbonDioxideSensorService, ContactSensorService, MotionSensorService, LeakSensorService, OccupancySensorService, SmokeSensorService
+    this.sensorCommandID = config["sensorCommandID"];
 }
 
 HttpJeedomAccessory.prototype = {
-
     httpRequest: function (url, callback) {
         request({
                 url: url,
@@ -47,8 +50,13 @@ HttpJeedomAccessory.prototype = {
     },
 
     //This function builds the URL.
-    setUrl: function (cmdID) {
-        return this.jeedom_url + "/core/api/jeeApi.php?apikey=" + this.jeedom_api + "&type=cmd&id=" + cmdID;
+    setUrl: function (cmdID, slider) {
+        var url = this.jeedom_url + "/core/api/jeeApi.php?apikey=" + this.jeedom_api + "&type=cmd&id=" + cmdID;
+        if (slider != null){
+            url += "&slider=" +slider;
+        }
+        return url;
+
     },
 
     //This function turns On or Off a switch device
@@ -60,9 +68,9 @@ HttpJeedomAccessory.prototype = {
         }
         var url;
         if (powerOn) {
-            url = this.setUrl(this.onCommandID);
+            url = this.setUrl(this.onCommandID, null);
         } else {
-            url = this.setUrl(this.offCommandID);
+            url = this.setUrl(this.offCommandID, null);
         }
         this.httpRequest(url, function (error, response, responseBody) {
             if (error) {
@@ -82,7 +90,7 @@ HttpJeedomAccessory.prototype = {
             callback(new Error("No status command ID defined"));
             return;
         }
-        var url = this.setUrl(this.stateCommandID);
+        var url = this.setUrl(this.stateCommandID, null);
         this.httpRequest(url, function (error, response, responseBody) {
             if (error) {
                 this.log("HTTP get power function failed: %s", error.message);
@@ -96,6 +104,50 @@ HttpJeedomAccessory.prototype = {
         }.bind(this));
     },
 
+    //This function changes level of a Light bulb
+    setLevel: function(level, callback) {
+        var url = this.control_url + level;
+        this.log("Setting value to %s", level);
+        if (!this.levelCommandID) {
+            this.log.warn("No command ID defined, please check config.json file");
+            callback(new Error("No command ID defined"));
+            return;
+        }
+        var url = this.setUrl(this.levelCommandID, level);
+        this.httpRequest(url, function (error, response, responseBody) {
+            if (error) {
+                this.log("HTTP set power failed with error: %s", error.message);
+                callback(error);
+            } else {
+                this.log("HTTP set power succeeded");
+                callback();
+            }
+        }.bind(this));
+    },
+
+    //This function get a level from a Light bulb
+    getLevel: function (callback) {
+        if (!this.stateCommandID) {
+            this.log.warn("No state command ID defined");
+            callback(new Error("No status command ID defined"));
+            return;
+        }
+        var url = this.setUrl(this.stateCommandID, null);
+        this.httpRequest(url, function (error, response, responseBody) {
+            if (error) {
+                this.log("HTTP get power function failed: %s", error.message);
+                callback(error);
+            } else {
+                var level = parseInt(responseBody);
+                this.log("Level is currently %s %", level);
+                if(level == 99){
+                    level = 100;
+                }
+                callback(null, level);
+            }
+        }.bind(this));
+    },
+
     //This function get a temperature measurement
     getTemperature: function (callback) {
         if (!this.temperatureCommandID) {
@@ -103,7 +155,7 @@ HttpJeedomAccessory.prototype = {
             callback(new Error("No temperature command ID defined"));
             return;
         }
-        var url = this.setUrl(this.temperatureCommandID);
+        var url = this.setUrl(this.temperatureCommandID, null);
         this.log("Getting current temperature for sensor " + this.name);
         this.httpRequest(url, function (error, response, responseBody) {
             if (error) {
@@ -124,7 +176,7 @@ HttpJeedomAccessory.prototype = {
             callback(new Error("No humidity command ID defined"));
             return;
         }
-        var url = this.setUrl(this.humidityCommandID);
+        var url = this.setUrl(this.humidityCommandID, null);
         this.log("Getting current humidity for sensor " + this.name);
         this.httpRequest(url, function (error, response, responseBody) {
             if (error) {
@@ -147,9 +199,9 @@ HttpJeedomAccessory.prototype = {
         }
         var url;
         if (shutterUp) {
-            url = this.setUrl(this.upCommandID);
+            url = this.setUrl(this.upCommandID, null);
         } else {
-            url = this.setUrl(this.downCommandID);
+            url = this.setUrl(this.downCommandID, null);
         }
         this.httpRequest(url, function (error, response, responseBody) {
             if (error) {
@@ -169,7 +221,7 @@ HttpJeedomAccessory.prototype = {
             callback(new Error("No status command ID defined"));
             return;
         }
-        var url = this.setUrl(this.stateCommandID);
+        var url = this.setUrl(this.stateCommandID, null);
         this.httpRequest(url, function (error, response, responseBody) {
             if (error) {
                 this.log("HTTP get shutter state function failed: %s", error.message);
@@ -189,7 +241,7 @@ HttpJeedomAccessory.prototype = {
             callback(new Error("No ambient light command ID defined"));
             return;
         }
-        var url = this.setUrl(this.ambientLightCommandID);
+        var url = this.setUrl(this.ambientLightCommandID, null);
         this.log("Getting current ambient light for sensor " + this.name );
         this.httpRequest(url, function(error, response, responseBody) {
             if (error) {
@@ -209,7 +261,7 @@ HttpJeedomAccessory.prototype = {
             callback(new Error("No garage door state command ID defined"));
             return;
         }
-        var url = this.setUrl(this.stateGarageDoorCommandID);
+        var url = this.setUrl(this.stateGarageDoorCommandID, null);
         this.log("Getting current garage door state " + this.name );
         this.httpRequest(url, function(error, response, responseBody) {
             if (error) {
@@ -240,9 +292,9 @@ HttpJeedomAccessory.prototype = {
         }
         var url;
         if(value === Characteristic.TargetDoorState.OPEN) {
-            url = this.setUrl(this.openGarageDoorCommandID);
+            url = this.setUrl(this.openGarageDoorCommandID, null);
         } else {
-            url = this.setUrl(this.closeGarageDoorCommandID);
+            url = this.setUrl(this.closeGarageDoorCommandID, null);
         }
         this.httpRequest(url, function (error, response, responseBody) {
             if (error) {
@@ -255,6 +307,25 @@ HttpJeedomAccessory.prototype = {
         }.bind(this));
     },
 
+    getBinarySensorState: function (callback) {
+        if (!this.sensorCommandID) {
+            this.log.warn("No sensor command ID defined");
+            callback(new Error("No sensor command ID defined"));
+            return;
+        }
+        var url = this.setUrl(this.sensorCommandID, null);
+        this.httpRequest(url, function (error, response, responseBody) {
+            if (error) {
+                this.log("HTTP get binary sensor state function failed: %s", error.message);
+                callback(error);
+            } else {
+                var level = parseInt(responseBody);
+                var isTrue = level > 0;
+                this.log("Binary sensor state is currently %s", level);
+                callback(null, isTrue);
+            }
+        }.bind(this));
+    },
 
     identify: function (callback) {
         this.log("Identify requested");
@@ -270,48 +341,161 @@ HttpJeedomAccessory.prototype = {
             .setCharacteristic(Characteristic.Model, "HTTP Model")
             .setCharacteristic(Characteristic.SerialNumber, "HTTP Serial Number");
 
-        if (this.service == "SwitchService") {
-            this.log("Defining a switch module");
-            var switchService = new Service.Switch(this.name);
-            switchService
-                .getCharacteristic(Characteristic.On)
-                .on('get', this.getPowerState.bind(this))
-                .on('set', this.setPowerState.bind(this));
-            return [switchService];
-        } else if (this.service == "TemperatureService") {
-            var temperatureService = new Service.TemperatureSensor(this.name);
-            temperatureService
-                .getCharacteristic(Characteristic.CurrentTemperature)
-                .on('get', this.getTemperature.bind(this));
-            return [informationService, temperatureService];
-        } else if (this.service == "HumidityService") {
-            var humidityService = new Service.HumiditySensor(this.name);
-            humidityService
-                .getCharacteristic(Characteristic.CurrentRelativeHumidity)
-                .on('get', this.getHumidity.bind(this));
-            return [informationService, humidityService];
-        } else if (this.service == "ShutterService") {
-            var windowCoveringService = new Service.WindowCovering(this.name);
-            windowCoveringService
-                .getCharacteristic(Characteristic.TargetPosition)
-                .on('get', this.getShutterState.bind(this))
-                .on('set', this.setShutterState.bind(this));
-            return [windowCoveringService];
-        } else if (this.service == "AmbientLightService") {
-            var ambientLightService = new Service.LightSensor(this.name);
-            ambientLightService
-                .getCharacteristic(Characteristic.CurrentAmbientLightLevel)
-                .on('get', this.getAmbientLight.bind(this));
-            return [informationService, ambientLightService];
-        } else if (this.service == "GarageDoorOpenerService") {
-            var garageDoorOpenerService = new Service.GarageDoorOpener(this.name);
-            garageDoorOpenerService
-                .getCharacteristic(Characteristic.CurrentDoorState)
-                .on('get', this.getCurrentDoorState.bind(this));
-            garageDoorOpenerService
-                .getCharacteristic(Characteristic.TargetDoorState)
-                .on('set', this.setTargetDoorState.bind(this));
-            return [garageDoorOpenerService];
+        switch(this.service) {
+            case "SwitchService": {
+                this.log("Defining a switch module");
+                var switchService = new Service.Switch(this.name);
+                switchService
+                    .getCharacteristic(Characteristic.On)
+                    .on('get', this.getPowerState.bind(this))
+                    .on('set', this.setPowerState.bind(this));
+                return [switchService];
+                break;
+            }
+            case "FanService": {
+                this.log("Defining a fan module");
+                var fanService = new Service.Fan(this.name);
+                fanService
+                    .getCharacteristic(Characteristic.On)
+                    .on('set', this.setPowerState.bind(this))
+                    .on('get', this.getPowerState.bind(this));
+                return [fanService];
+                break;
+            }
+            case "OutletService": {
+                this.log("Defining a outlet module");
+                var outletService = new Service.Outlet(this.name);
+                outletService
+                    .getCharacteristic(Characteristic.On)
+                    .on('set', this.setPowerState.bind(this))
+                    .on('get', this.getPowerState.bind(this));
+                return [outletService];
+                break;
+            }
+            case "LightbulbService": {
+                this.log("Defining a lightbulb module");
+                var lightbulbService = new Service.Lightbulb(this.name);
+                lightbulbService
+                    .getCharacteristic(Characteristic.On)
+                    .on('set', this.setPowerState.bind(this))
+                    .on('get', this.getPowerState.bind(this));
+
+                if(this.service.can_dim == null || this.service.can_dim == true ) {
+                    lightbulbService
+                        .addCharacteristic(new Characteristic.Brightness())
+                        .on('set', this.setLevel.bind(this))
+                        .on('get', this.getLevel.bind(this));
+                }
+                return [lightbulbService];
+                break;
+            }
+            case "TemperatureService": {
+                this.log("Defining a temperature sensor");
+                var temperatureService = new Service.TemperatureSensor(this.name);
+                temperatureService
+                    .getCharacteristic(Characteristic.CurrentTemperature)
+                    .on('get', this.getTemperature.bind(this));
+                return [informationService, temperatureService];
+                break;
+            }
+            case "HumidityService": {
+                this.log("Defining a humidity sensor");
+                var humidityService = new Service.HumiditySensor(this.name);
+                humidityService
+                    .getCharacteristic(Characteristic.CurrentRelativeHumidity)
+                    .on('get', this.getHumidity.bind(this));
+                return [informationService, humidityService];
+                break;
+            }
+            case "AmbientLightService": {
+                this.log("Defining a light sensor");
+                var ambientLightService = new Service.LightSensor(this.name);
+                ambientLightService
+                    .getCharacteristic(Characteristic.CurrentAmbientLightLevel)
+                    .on('get', this.getAmbientLight.bind(this));
+                return [informationService, ambientLightService];
+                break;
+            }
+            case "ShutterService": {
+                this.log("Defining a window covering module");
+                var windowCoveringService = new Service.WindowCovering(this.name);
+                windowCoveringService
+                    .getCharacteristic(Characteristic.CurrentPosition)
+                    .on('get', this.getShutterState.bind(this));
+                windowCoveringService
+                    .getCharacteristic(Characteristic.TargetPosition)
+                    .on('set', this.setShutterState.bind(this));
+                return [windowCoveringService];
+                break;
+            }
+            case "GarageDoorOpenerService": {
+                this.log("Defining a garage door opener");
+                var garageDoorOpenerService = new Service.GarageDoorOpener(this.name);
+                garageDoorOpenerService
+                    .getCharacteristic(Characteristic.CurrentDoorState)
+                    .on('get', this.getCurrentDoorState.bind(this));
+                garageDoorOpenerService
+                    .getCharacteristic(Characteristic.TargetDoorState)
+                    .on('set', this.setTargetDoorState.bind(this));
+                return [garageDoorOpenerService];
+                break;
+            }
+            case "CarbonMonoxideSensorService": {
+                var carbonMonoxideSensorService = new Service.CarbonMonoxideSensor(this.name);
+                carbonMonoxideSensorService
+                    .getCharacteristic(Characteristic.CarbonMonoxideDetected)
+                    .on('get', this.getBinarySensorState.bind(this));
+                return [informationService, carbonMonoxideSensorService];
+                break;
+            }
+            case "CarbonDioxideSensorService": {
+                var carbonDioxideSensorService = new Service.CarbonDioxideSensor(this.name);
+                carbonDioxideSensorService
+                    .getCharacteristic(Characteristic.CarbonDioxideDetected)
+                    .on('get', this.getBinarySensorState.bind(this));
+                return [informationService, carbonDioxideSensorService];
+                break;
+            }
+            case "ContactSensorService": {
+                var contactSensorService = new Service.ContactSensor(this.name);
+                contactSensorService
+                    .getCharacteristic(Characteristic.ContactSensorState)
+                    .on('get', this.getBinarySensorState.bind(this));
+                return [informationService, contactSensorService];
+                break;
+            }
+            case "MotionSensorService": {
+                var motionSensorService = new Service.MotionSensor(this.name);
+                motionSensorService
+                    .getCharacteristic(Characteristic.MotionDetected)
+                    .on('get', this.getBinarySensorState.bind(this));
+                return [informationService, motionSensorService];
+                break;
+            }
+            case "LeakSensorService": {
+                var leakSensorService = new Service.LeakSensor(this.name);
+                leakSensorService
+                    .getCharacteristic(Characteristic.LeakDetected)
+                    .on('get', this.getBinarySensorState.bind(this));
+                return [informationService, leakSensorService];
+                break;
+            }
+            case "OccupancySensorService": {
+                var occupancySensorService = new Service.OccupancySensor(this.name);
+                occupancySensorService
+                    .getCharacteristic(Characteristic.OccupancyDetected)
+                    .on('get', this.getBinarySensorState.bind(this));
+                return [informationService, occupancySensorService];
+                break;
+            }
+            case "SmokeSensorService": {
+                var smokeSensorService = new Service.SmokeSensor(this.name);
+                smokeSensorService
+                    .getCharacteristic(Characteristic.SmokeDetected)
+                    .on('get', this.getBinarySensorState.bind(this));
+                return [informationService, smokeSensorService];
+                break;
+            }
         }
     }
 }
