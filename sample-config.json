@@ -15,9 +15,94 @@
         "accessory": "HttpJeedom",
         "jeedom_url": "https://jeedom.domain.com/jeedom",
         "jeedom_api": "x8r0pcqgjfghrthtx158",
+        "service": "SwitchService",
+        "name": "Living Room Switch",
+        "onCommandID": "125",
+        "offCommandID": "126",
+        "stateCommandID": "127"
+      },
+      {
+        "accessory": "HttpJeedom",
+        "jeedom_url": "https://jeedom.domain.com/jeedom",
+        "jeedom_api": "x8r0pcqgjfghrthtx158",
+        "service": "OutletService",
+        "name": "Living Room Outlet",
+        "onCommandID": "135",
+        "offCommandID": "136",
+        "stateCommandID": "137"
+      },
+      {
+        "accessory": "HttpJeedom",
+        "jeedom_url": "https://jeedom.domain.com/jeedom",
+        "jeedom_api": "x8r0pcqgjfghrthtx158",
+        "service": "FanService",
+        "name": "Kitchen fan",
+        "onCommandID": "145",
+        "offCommandID": "146",
+        "stateCommandID": "147"
+      },
+      {
+        "accessory": "HttpJeedom",
+        "jeedom_url": "https://jeedom.domain.com/jeedom",
+        "jeedom_api": "x8r0pcqgjfghrthtx158",
+        "service": "LightbulbService",
+        "name": "Living Room buld",
+        "onCommandID": "155",
+        "offCommandID": "156",
+        "stateCommandID": "157",
+        "levelCommandID": "158"
+      },
+      {
+        "accessory": "HttpJeedom",
+        "jeedom_url": "https://jeedom.domain.com/jeedom",
+        "jeedom_api": "x8r0pcqgjfghrthtx158",
         "service": "TemperatureService",
         "name": "Living Room Temperature",
         "temperatureCommandID": "185"
+      },
+      {
+        "accessory": "HttpJeedom",
+        "jeedom_url": "https://jeedom.domain.com/jeedom",
+        "jeedom_api": "x8r0pcqgjfghrthtx158",
+        "service": "HumidityService",
+        "name": "Living Room Humidity",
+        "humidityCommandID": "195"
+      },
+      {
+        "accessory": "HttpJeedom",
+        "jeedom_url": "https://jeedom.domain.com/jeedom",
+        "jeedom_api": "x8r0pcqgjfghrthtx158",
+        "service": "AmbientLightService",
+        "name": "Living Room ambiance light",
+        "ambientLightCommandID": "205"
+      },
+      {
+        "accessory": "HttpJeedom",
+        "jeedom_url": "https://jeedom.domain.com/jeedom",
+        "jeedom_api": "x8r0pcqgjfghrthtx158",
+        "service": "GarageDoorOpenerService",
+        "name": "Garage door",
+        "openGarageDoorCommandID": "215",
+        "closeGarageDoorCommandID": "215",
+        "stateGarageDoorCommandID": "216"
+      },
+      {
+        "accessory": "HttpJeedom",
+        "jeedom_url": "https://jeedom.domain.com/jeedom",
+        "jeedom_api": "x8r0pcqgjfghrthtx158",
+        "service": "MotionSensorService",
+        "name": "Living Room Temperature",
+        "sensorCommandID": "225"
+      },
+      {
+        "accessory": "HttpJeedom",
+        "jeedom_url": "https://jeedom.domain.com/jeedom",
+        "jeedom_api": "x8r0pcqgjfghrthtx158",
+        "service": "LockService",
+        "name": "Living Room Temperature",
+        "lockCommandID": "235",
+        "unlockCommandID": "236",
+        "stateCommandID": "237"
       }
     ]
 }
