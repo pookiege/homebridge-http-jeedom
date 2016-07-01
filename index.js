@@ -35,6 +35,9 @@ function HttpJeedomAccessory(log, config) {
     this.stateGarageDoorCommandID = config["stateGarageDoorCommandID"];
     // CarbonMonoxideSensorService, CarbonDioxideSensorService, ContactSensorService, MotionSensorService, LeakSensorService, OccupancySensorService, SmokeSensorService
     this.sensorCommandID = config["sensorCommandID"];
+    //LockService
+    this.lockCommandID = config["lockCommandID"];
+    this.unlockCommandID = config["unlockCommandID"];
 }
 
 HttpJeedomAccessory.prototype = {
@@ -327,6 +330,48 @@ HttpJeedomAccessory.prototype = {
         }.bind(this));
     },
 
+    getLockCurrentState: function(callback) {
+        if (!this.stateCommandID) {
+            this.log.warn("No state command ID defined");
+            callback(new Error("No state command ID defined"));
+            return;
+        }
+        var url = this.setUrl(this.stateCommandID, null);
+        this.httpRequest(url, function (error, response, responseBody) {
+            if (error) {
+                this.log("HTTP get binary sensor state function failed: %s", error.message);
+                callback(error);
+            } else {
+                var level = parseInt(responseBody);
+                this.log("Lock state is currently %s", level);
+                callback(null, level);
+            }
+        }.bind(this));
+    },
+
+    setLockTargetState: function(state, callback) {
+        if (!this.lockCommandID || !this.unlockCommandID) {
+            this.log.warn("No command ID defined, please check config.json file");
+            callback(new Error("No command ID defined"));
+            return;
+        }
+        var url;
+        if (state) {
+            url = this.setUrl(this.lockCommandID, null);
+        } else {
+            url = this.setUrl(this.unlockCommandID, null);
+        }
+        this.httpRequest(url, function (error, response, responseBody) {
+            if (error) {
+                this.log("HTTP set door lock up failed with error: %s", error.message);
+                callback(error);
+            } else {
+                this.log("HTTP rise shutter succeeded");
+                callback();
+            }
+        }.bind(this));
+    },
+
     identify: function (callback) {
         this.log("Identify requested");
         callback();
@@ -494,6 +539,17 @@ HttpJeedomAccessory.prototype = {
                     .getCharacteristic(Characteristic.SmokeDetected)
                     .on('get', this.getBinarySensorState.bind(this));
                 return [informationService, smokeSensorService];
+                break;
+            }
+            case "LockService":{
+                var lockService = new Service.LockMechanism(this.name);
+                lockService
+                    .getCharacteristic(Characteristic.LockCurrentState)
+                    .on('get', this.getLockCurrentState.bind(this));
+                lockService
+                    .getCharacteristic(Characteristic.LockTargetState)
+                    .on('set', this.setLockTargetState.bind(this));
+                return [lockService];
                 break;
             }
         }
