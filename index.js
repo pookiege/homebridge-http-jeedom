@@ -26,7 +26,11 @@ function HttpJeedomAccessory(log, config) {
     this.downCommandID = config["downCommandID"];
     this.stateCommandID = config["stateCommandID"];
     // AmbientLightService
-    this.ambientLightCommandID     = config["ambientLightCommandID"];
+    this.ambientLightCommandID = config["ambientLightCommandID"];
+    // GarageDoorOpenerService
+    this.openGarageDoorCommandID = config["openGarageDoorCommandID"];
+    this.closeGarageDoorCommandID = config["closeGarageDoorCommandID"];
+    this.stateGarageDoorCommandID = config["stateGarageDoorCommandID"];
 }
 
 HttpJeedomAccessory.prototype = {
@@ -186,7 +190,7 @@ HttpJeedomAccessory.prototype = {
             return;
         }
         var url = this.setUrl(this.ambientLightCommandID);
-        this.log("Getting current humidity for sensor " + this.name );
+        this.log("Getting current ambient light for sensor " + this.name );
         this.httpRequest(url, function(error, response, responseBody) {
             if (error) {
                 this.log("HTTP get ambient light function failed: %s", error.message);
@@ -198,6 +202,59 @@ HttpJeedomAccessory.prototype = {
             }
         }.bind(this));
     },
+
+    getCurrentDoorState: function(callback) {
+        if (!this.stateGarageDoorCommandID) {
+            this.log.warn("No garage door state command ID defined");
+            callback(new Error("No garage door state command ID defined"));
+            return;
+        }
+        var url = this.setUrl(this.stateGarageDoorCommandID);
+        this.log("Getting current garage door state " + this.name );
+        this.httpRequest(url, function(error, response, responseBody) {
+            if (error) {
+                this.log("HTTP get garage door state function failed: %s", error.message);
+                callback(error);
+            } else {
+                var garageDoorStatus = parseInt(responseBody);
+                var textState = "";
+                switch (garageDoorStatus) {
+                    case 0: textState = "Closed"; break;
+                    case 252: textState = "Closing"; break;
+                    case 253: textState = "Stopped"; break;
+                    case 254: textState = "Opening"; break;
+                    case 255: textState = "Opened"; break;
+                    default: this.log("Unhandled CurrentDoorState");
+                }
+                this.log("Garage door state for " + this.name + " is currently %s", textState);
+                callback(null, garageDoorStatus);
+            }
+        }.bind(this));
+    },
+
+    setTargetDoorState: function(value, callback) {
+        if (!this.openGarageDoorCommandID || !this.closeGarageDoorCommandID) {
+            this.log.warn("No command ID defined, please check config.json file");
+            callback(new Error("No command ID defined"));
+            return;
+        }
+        var url;
+        if(value === Characteristic.TargetDoorState.OPEN) {
+            url = this.setUrl(this.openGarageDoorCommandID);
+        } else {
+            url = this.setUrl(this.closeGarageDoorCommandID);
+        }
+        this.httpRequest(url, function (error, response, responseBody) {
+            if (error) {
+                this.log("HTTP set shutter up failed with error: %s", error.message);
+                callback(error);
+            } else {
+                this.log("HTTP rise shutter succeeded");
+                callback();
+            }
+        }.bind(this));
+    },
+
 
     identify: function (callback) {
         this.log("Identify requested");
@@ -246,6 +303,15 @@ HttpJeedomAccessory.prototype = {
                 .getCharacteristic(Characteristic.CurrentAmbientLightLevel)
                 .on('get', this.getAmbientLight.bind(this));
             return [informationService, ambientLightService];
+        } else if (this.service == "GarageDoorOpenerService") {
+            var garageDoorOpenerService = new Service.GarageDoorOpener(this.name);
+            garageDoorOpenerService
+                .getCharacteristic(Characteristic.CurrentDoorState)
+                .on('get', this.getCurrentDoorState.bind(this));
+            garageDoorOpenerService
+                .getCharacteristic(Characteristic.TargetDoorState)
+                .on('set', this.setTargetDoorState.bind(this));
+            return [garageDoorOpenerService];
         }
     }
 }
