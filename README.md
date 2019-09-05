@@ -12,14 +12,14 @@ Based on https://github.com/rudders/homebridge-http
 # Configuration
 
 List of available services (and configuration var):
-SwitchService
-        -onCommandID
-        -offCommandID
-        -stateCommandID
-TemperatureService
-        -temperatureCommandID
-HumidityService
-        -humidityCommandID
+* SwitchService
+* * onCommandID
+* * offCommandID
+* * stateCommandID
+* TemperatureService
+* * temperatureCommandID
+* HumidityService
+* * humidityCommandID
 
 * 'jeedom_url' ==> URL address of your Jeedom server
 * 'jeedom_api' ==> Get your Jeedom API in "Configuration" in Jeedom
