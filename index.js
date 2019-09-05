@@ -21,6 +21,8 @@ function HttpJeedomAccessory(log, config) {
     this.levelCommandID = config["levelCommandID"];
     this.colorCommandID = config["colorCommandID"];
     this.stateColorCommandID = config["stateColorCommandID"];
+    this.colorTemperatureCommandID = config["colorTemperatureCommandID"];
+    this.saturationCommandID = config["saturationCommandID"];
     // TemperatureService
     this.temperatureCommandID = config["temperatureCommandID"];
     // HumidityService
@@ -152,6 +154,93 @@ HttpJeedomAccessory.prototype = {
                 //    hue = 100;
                // }
                 callback(null, color);
+            }
+        }.bind(this));
+    },
+    
+    //This function changes saturation of a Light bulb
+    setSaturation: function(saturation, callback) {
+        var url = this.control_url + saturation;
+        this.log("Setting value to %s", saturation);
+        if (!this.saturationCommandID) {
+            this.log.warn("No command ID defined, please check config.json file");
+            callback(new Error("No command ID defined"));
+            return;
+        }
+        var url = this.setUrl(this.saturationCommandID, saturation, null);
+        this.httpRequest(url, function (error, response, responseBody) {
+            if (error) {
+                this.log("HTTP set color failed with error: %s", error.message);
+                callback(error);
+            } else {
+                this.log("HTTP set saturation succeeded");
+                callback();
+            }
+        }.bind(this));
+    },
+
+    //This function get the saturation from a Light bulb
+    getSaturation: function (callback) {
+        if (!this.stateCommandID) {
+            this.log.warn("No state command ID defined");
+            callback(new Error("No status command ID defined"));
+            return;
+        }
+        var url = this.setUrl(this.stateColorCommandID, null, null);
+        this.httpRequest(url, function (error, response, responseBody) {
+            if (error) {
+                this.log("HTTP get stateColor function failed: %s", error.message);
+                callback(error);
+            } else {
+                var saturation = parseInt(responseBody);
+                this.log("saturation is currently %s %", saturation);
+                //if(hue == 99){
+                //    hue = 100;
+               // }
+                callback(null, saturation);
+            }
+        }.bind(this));
+    },
+    //This function changes colorTemperature of a Light bulb
+    setColorTemperature: function(colorTemperature, callback) {
+        var url = this.control_url + colorTemperature;
+        this.log("Setting value to %s", colorTemperature);
+        if (!this.colorTemperatureCommandID) {
+            this.log.warn("No command ID defined, please check config.json file");
+            callback(new Error("No command ID defined"));
+            return;
+        }
+        var url = this.setUrl(this.colorTemperatureCommandID, null, colorTemperature);
+        this.httpRequest(url, function (error, response, responseBody) {
+            if (error) {
+                this.log("HTTP set colorTemperature failed with error: %s", error.message);
+                callback(error);
+            } else {
+                this.log("HTTP set colorTemperature succeeded");
+                callback();
+            }
+        }.bind(this));
+    },
+
+    //This function get the colorTemperature from a Light bulb
+    getColorTemperature: function (callback) {
+        if (!this.stateCommandID) {
+            this.log.warn("No state command ID defined");
+            callback(new Error("No status command ID defined"));
+            return;
+        }
+        var url = this.setUrl(this.colorTemperatureCommandID, null, null);
+        this.httpRequest(url, function (error, response, responseBody) {
+            if (error) {
+                this.log("HTTP get colorTemperature function failed: %s", error.message);
+                callback(error);
+            } else {
+                var colorTemperature = parseInt(responseBody);
+                this.log("colorTemperature is currently %s %", colorTemperature);
+                //if(hue == 99){
+                //    hue = 100;
+               // }
+                callback(null, colorTemperature);
             }
         }.bind(this));
     },
@@ -480,6 +569,10 @@ HttpJeedomAccessory.prototype = {
                         .on('set', this.setLevel.bind(this))
                         .on('get', this.getLevel.bind(this));
                 }
+                if (this.colorCommandID)
+                    lightbulbService.addCharacteristic(Characteristic.Hue)
+                        .on("get", this.getColor.bind(this))
+                        .on("set", this.setColor.bind(this));
                 return [lightbulbService];
                 break;
             }
