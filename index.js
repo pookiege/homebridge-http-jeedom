@@ -53,11 +53,14 @@ HttpJeedomAccessory.prototype = {
     },
 
     //This function builds the URL.
-    setUrl: function (cmdID, slider) {
+    setUrl: function (cmdID, slider, color) {
         var url = this.jeedom_url + "/core/api/jeeApi.php?apikey=" + this.jeedom_api + "&type=cmd&id=" + cmdID;
         if (slider != null){
             url += "&slider=" +slider;
         }
+        if (color != null){
+            url += "&color=" +color;
+        }     
         return url;
 
     },
@@ -71,9 +74,9 @@ HttpJeedomAccessory.prototype = {
         }
         var url;
         if (powerOn) {
-            url = this.setUrl(this.onCommandID, null);
+            url = this.setUrl(this.onCommandID, null, null);
         } else {
-            url = this.setUrl(this.offCommandID, null);
+            url = this.setUrl(this.offCommandID, null, null);
         }
         this.httpRequest(url, function (error, response, responseBody) {
             if (error) {
@@ -93,7 +96,7 @@ HttpJeedomAccessory.prototype = {
             callback(new Error("No status command ID defined"));
             return;
         }
-        var url = this.setUrl(this.stateCommandID, null);
+        var url = this.setUrl(this.stateCommandID, null, null);
         this.httpRequest(url, function (error, response, responseBody) {
             if (error) {
                 this.log("HTTP get power function failed: %s", error.message);
@@ -107,6 +110,50 @@ HttpJeedomAccessory.prototype = {
         }.bind(this));
     },
 
+    //This function changes hue of a Light bulb
+    setHue: function(hue, callback) {
+        var url = this.control_url + hue;
+        this.log("Setting value to %s", hue);
+        if (!this.hueCommandID) {
+            this.log.warn("No command ID defined, please check config.json file");
+            callback(new Error("No command ID defined"));
+            return;
+        }
+        var url = this.setUrl(this.hueCommandID, null, hue);
+        this.httpRequest(url, function (error, response, responseBody) {
+            if (error) {
+                this.log("HTTP set hue failed with error: %s", error.message);
+                callback(error);
+            } else {
+                this.log("HTTP set hue succeeded");
+                callback();
+            }
+        }.bind(this));
+    },
+
+    //This function get the hue from a Light bulb
+    getHue: function (callback) {
+        if (!this.stateCommandID) {
+            this.log.warn("No state command ID defined");
+            callback(new Error("No status command ID defined"));
+            return;
+        }
+        var url = this.setUrl(this.stateCommandID, null, null);
+        this.httpRequest(url, function (error, response, responseBody) {
+            if (error) {
+                this.log("HTTP get power function failed: %s", error.message);
+                callback(error);
+            } else {
+                var hue = parseInt(responseBody);
+                this.log("Hue is currently %s %", hue);
+                if(hue == 99){
+                    hue = 100;
+                }
+                callback(null, hue);
+            }
+        }.bind(this));
+    },
+    
     //This function changes level of a Light bulb
     setLevel: function(level, callback) {
         var url = this.control_url + level;
@@ -116,13 +163,13 @@ HttpJeedomAccessory.prototype = {
             callback(new Error("No command ID defined"));
             return;
         }
-        var url = this.setUrl(this.levelCommandID, level);
+        var url = this.setUrl(this.levelCommandID, level, null);
         this.httpRequest(url, function (error, response, responseBody) {
             if (error) {
-                this.log("HTTP set power failed with error: %s", error.message);
+                this.log("HTTP set level failed with error: %s", error.message);
                 callback(error);
             } else {
-                this.log("HTTP set power succeeded");
+                this.log("HTTP set level succeeded");
                 callback();
             }
         }.bind(this));
@@ -135,7 +182,7 @@ HttpJeedomAccessory.prototype = {
             callback(new Error("No status command ID defined"));
             return;
         }
-        var url = this.setUrl(this.stateCommandID, null);
+        var url = this.setUrl(this.stateCommandID, null, null);
         this.httpRequest(url, function (error, response, responseBody) {
             if (error) {
                 this.log("HTTP get power function failed: %s", error.message);
@@ -158,7 +205,7 @@ HttpJeedomAccessory.prototype = {
             callback(new Error("No temperature command ID defined"));
             return;
         }
-        var url = this.setUrl(this.temperatureCommandID, null);
+        var url = this.setUrl(this.temperatureCommandID, null, null);
         this.log("Getting current temperature for sensor " + this.name);
         this.httpRequest(url, function (error, response, responseBody) {
             if (error) {
@@ -179,7 +226,7 @@ HttpJeedomAccessory.prototype = {
             callback(new Error("No humidity command ID defined"));
             return;
         }
-        var url = this.setUrl(this.humidityCommandID, null);
+        var url = this.setUrl(this.humidityCommandID, null, null);
         this.log("Getting current humidity for sensor " + this.name);
         this.httpRequest(url, function (error, response, responseBody) {
             if (error) {
@@ -202,9 +249,9 @@ HttpJeedomAccessory.prototype = {
         }
         var url;
         if (shutterUp) {
-            url = this.setUrl(this.upCommandID, null);
+            url = this.setUrl(this.upCommandID, null, null);
         } else {
-            url = this.setUrl(this.downCommandID, null);
+            url = this.setUrl(this.downCommandID, null, null);
         }
         this.httpRequest(url, function (error, response, responseBody) {
             if (error) {
@@ -224,7 +271,7 @@ HttpJeedomAccessory.prototype = {
             callback(new Error("No status command ID defined"));
             return;
         }
-        var url = this.setUrl(this.stateCommandID, null);
+        var url = this.setUrl(this.stateCommandID, null, null);
         this.httpRequest(url, function (error, response, responseBody) {
             if (error) {
                 this.log("HTTP get shutter state function failed: %s", error.message);
@@ -244,7 +291,7 @@ HttpJeedomAccessory.prototype = {
             callback(new Error("No ambient light command ID defined"));
             return;
         }
-        var url = this.setUrl(this.ambientLightCommandID, null);
+        var url = this.setUrl(this.ambientLightCommandID, null, null);
         this.log("Getting current ambient light for sensor " + this.name );
         this.httpRequest(url, function(error, response, responseBody) {
             if (error) {
@@ -264,7 +311,7 @@ HttpJeedomAccessory.prototype = {
             callback(new Error("No garage door state command ID defined"));
             return;
         }
-        var url = this.setUrl(this.stateGarageDoorCommandID, null);
+        var url = this.setUrl(this.stateGarageDoorCommandID, null, null);
         this.log("Getting current garage door state " + this.name );
         this.httpRequest(url, function(error, response, responseBody) {
             if (error) {
@@ -295,9 +342,9 @@ HttpJeedomAccessory.prototype = {
         }
         var url;
         if(value === Characteristic.TargetDoorState.OPEN) {
-            url = this.setUrl(this.openGarageDoorCommandID, null);
+            url = this.setUrl(this.openGarageDoorCommandID, null, null);
         } else {
-            url = this.setUrl(this.closeGarageDoorCommandID, null);
+            url = this.setUrl(this.closeGarageDoorCommandID, null, null);
         }
         this.httpRequest(url, function (error, response, responseBody) {
             if (error) {
@@ -316,7 +363,7 @@ HttpJeedomAccessory.prototype = {
             callback(new Error("No sensor command ID defined"));
             return;
         }
-        var url = this.setUrl(this.sensorCommandID, null);
+        var url = this.setUrl(this.sensorCommandID, null, null);
         this.httpRequest(url, function (error, response, responseBody) {
             if (error) {
                 this.log("HTTP get binary sensor state function failed: %s", error.message);
@@ -336,7 +383,7 @@ HttpJeedomAccessory.prototype = {
             callback(new Error("No state command ID defined"));
             return;
         }
-        var url = this.setUrl(this.stateCommandID, null);
+        var url = this.setUrl(this.stateCommandID, null, null);
         this.httpRequest(url, function (error, response, responseBody) {
             if (error) {
                 this.log("HTTP get binary sensor state function failed: %s", error.message);
@@ -357,9 +404,9 @@ HttpJeedomAccessory.prototype = {
         }
         var url;
         if (state) {
-            url = this.setUrl(this.lockCommandID, null);
+            url = this.setUrl(this.lockCommandID, null, null);
         } else {
-            url = this.setUrl(this.unlockCommandID, null);
+            url = this.setUrl(this.unlockCommandID, null, null);
         }
         this.httpRequest(url, function (error, response, responseBody) {
             if (error) {
