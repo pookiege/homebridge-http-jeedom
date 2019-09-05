@@ -12,14 +12,15 @@ Based on https://github.com/rudders/homebridge-http
 # Configuration
 
 List of available services (and configuration var):
-* SwitchService
-* * onCommandID
-* * offCommandID
-* * stateCommandID
-* TemperatureService
-* * temperatureCommandID
-* HumidityService
-* * humidityCommandID
+* SwitchService, OutletService, FanService : onCommandID, offCommandID, stateCommandID
+* TemperatureService : temperatureCommandID
+* HumidityService : humidityCommandID
+* LightbulbService : onCommandID, offCommandID, stateCommandID, levelCommandID, colorCommandID, stateColorCommandID. colorTemperatureID, saturationID
+* ShutterService : upCommandID, downCommandID, stateCommandID
+* AmbientLightService : ambientLightCommandID
+* GarageDoorOpenerService : openGarageDoorCommandID, closeGarageDoorCommandID, stateGarageDoorCommandID
+* CarbonMonoxideSensorService, CarbonDioxideSensorService, ContactSensorService, MotionSensorService, LeakSensorService, OccupancySensorService, SmokeSensorService : sensorCommandID
+* LockService : lockCommandID, unlockCommandID
 
 * 'jeedom_url' ==> URL address of your Jeedom server
 * 'jeedom_api' ==> Get your Jeedom API in "Configuration" in Jeedom
