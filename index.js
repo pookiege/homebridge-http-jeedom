@@ -19,6 +19,8 @@ function HttpJeedomAccessory(log, config) {
     this.stateCommandID = config["stateCommandID"];
     // LightbulbService
     this.levelCommandID = config["levelCommandID"];
+    this.colorCommandID = config["colorCommandID"];
+    this.stateColorCommandID = config["stateColorCommandID"];
     // TemperatureService
     this.temperatureCommandID = config["temperatureCommandID"];
     // HumidityService
@@ -111,45 +113,45 @@ HttpJeedomAccessory.prototype = {
     },
 
     //This function changes hue of a Light bulb
-    setHue: function(hue, callback) {
-        var url = this.control_url + hue;
-        this.log("Setting value to %s", hue);
-        if (!this.hueCommandID) {
+    setColor: function(color, callback) {
+        var url = this.control_url + color;
+        this.log("Setting value to %s", color);
+        if (!this.colorCommandID) {
             this.log.warn("No command ID defined, please check config.json file");
             callback(new Error("No command ID defined"));
             return;
         }
-        var url = this.setUrl(this.hueCommandID, null, hue);
+        var url = this.setUrl(this.colorCommandID, null, hue);
         this.httpRequest(url, function (error, response, responseBody) {
             if (error) {
-                this.log("HTTP set hue failed with error: %s", error.message);
+                this.log("HTTP set color failed with error: %s", error.message);
                 callback(error);
             } else {
-                this.log("HTTP set hue succeeded");
+                this.log("HTTP set color succeeded");
                 callback();
             }
         }.bind(this));
     },
 
     //This function get the hue from a Light bulb
-    getHue: function (callback) {
+    getColor: function (callback) {
         if (!this.stateCommandID) {
             this.log.warn("No state command ID defined");
             callback(new Error("No status command ID defined"));
             return;
         }
-        var url = this.setUrl(this.stateCommandID, null, null);
+        var url = this.setUrl(this.stateColorCommandID, null, null);
         this.httpRequest(url, function (error, response, responseBody) {
             if (error) {
-                this.log("HTTP get power function failed: %s", error.message);
+                this.log("HTTP get stateColor function failed: %s", error.message);
                 callback(error);
             } else {
-                var hue = parseInt(responseBody);
-                this.log("Hue is currently %s %", hue);
-                if(hue == 99){
-                    hue = 100;
-                }
-                callback(null, hue);
+                var color = parseInt(responseBody);
+                this.log("Color is currently %s %", color);
+                //if(hue == 99){
+                //    hue = 100;
+               // }
+                callback(null, color);
             }
         }.bind(this));
     },
